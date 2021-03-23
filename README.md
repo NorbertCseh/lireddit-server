@@ -4,12 +4,13 @@ More info here: https://www.youtube.com/watch?v=I6ypD7qv3Z8&t=1381s
 
 ## Dependencies so far
 
--   [MikroORM|https://mikro-orm.io/]
+-   MikroORM
 -   Express
 -   Apollo server
 -   Graphql
 -   PostgreSQL
 -   reflect-metadata
+-   Argon2
 
 ## Dev dependencies so far
 

@@ -15,6 +15,7 @@ More info here: https://www.youtube.com/watch?v=I6ypD7qv3Z8&t=1381s
 -   Redis
 -   Connect-redis
 -   class-validator
+-   cors
 
 ## Dev dependencies so far
 

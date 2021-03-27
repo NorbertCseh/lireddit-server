@@ -2,7 +2,7 @@ import { User } from "../entities/User";
 import { MyContext } from "../types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from 'argon2'
-
+import { EntityManager } from "@mikro-orm/postgresql";
 
 //InputTypes for arguments
 @InputType()
@@ -44,7 +44,7 @@ export class UserResolver {
         if (options.username.length <= 2) {
             return {
                 errors: [{
-                    field: 'Username',
+                    field: 'username',
                     message: 'Username must be greater than 2'
                 }]
             }
@@ -53,23 +53,29 @@ export class UserResolver {
         if (options.password.length <= 3) {
             return {
                 errors: [{
-                    field: 'Password',
+                    field: 'password',
                     message: 'Password must be greater than 3'
                 }]
             }
         }
 
         const hashedPassword = await argon2.hash(options.password)
-        const user = em.create(User, { username: options.username, password: hashedPassword })
+        let user
         try {
             //If it fails user.id will be null and we cannot send back null as id coz the schema settings
-            await em.persistAndFlush(user)
+            const result = await (em as EntityManager).createQueryBuilder(User).getKnexQuery().insert({
+                username: options.username,
+                password: hashedPassword,
+                created_at: new Date(),
+                updated_at: new Date()
+            }).returning("*");
+            user = result[0];
         } catch (error) {
             if (error.code === '23505') {
                 //Duplicate username error
                 return {
                     errors: [{
-                        field: 'Username',
+                        field: 'username',
                         message: 'Username already taken'
                     }]
                 }
@@ -94,7 +100,7 @@ export class UserResolver {
         if (!user) {
             return {
                 errors: [{
-                    field: 'Username',
+                    field: 'username',
                     message: 'That username does not exists.'
                 }]
             }
@@ -103,7 +109,7 @@ export class UserResolver {
         if (!valid) {
             return {
                 errors: [{
-                    field: 'Password',
+                    field: 'password',
                     message: 'Incorrect password.'
                 }]
             }

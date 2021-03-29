@@ -1,11 +1,11 @@
 import 'reflect-metadata'
 require('dotenv').config()
 import { MikroORM } from '@mikro-orm/core'
-import { __prod__ } from './constants';
+import { COOKIE_NAME, __prod__ } from './constants';
 import express from 'express'
 import { ApolloServer } from 'apollo-server-express'
 import { buildSchema } from 'type-graphql'
-import redis from 'redis';
+import Redis from 'ioredis';
 import session from 'express-session';
 import connectRedis from 'connect-redis'
 import cors from "cors";
@@ -22,14 +22,13 @@ import { MyContext } from './types';
 
 
 const main = async () => {
-
     const orm = await MikroORM.init(microConfig);
     await orm.getMigrator().up()
 
     const app = express()
 
     const RedisStore = connectRedis(session)
-    const redisClient = redis.createClient()
+    const redis = new Redis()
 
     app.use(cors({
         origin: "http://localhost:3000",
@@ -37,9 +36,9 @@ const main = async () => {
     }))
     app.use(
         session({
-            name: 'qid',
+            name: COOKIE_NAME,
             store: new RedisStore({
-                client: redisClient,
+                client: redis,
                 //When customer dose something, refresh the session remaining time
                 disableTouch: true,
             }),
@@ -63,7 +62,7 @@ const main = async () => {
             }
         ),
         //To access it from everywhere req,res for the cookie
-        context: ({ req, res }): MyContext => ({ em: orm.em, req, res })
+        context: ({ req, res }): MyContext => ({ em: orm.em, req, res, redis })
     })
 
     apolloServer.applyMiddleware({ app, cors: false });
